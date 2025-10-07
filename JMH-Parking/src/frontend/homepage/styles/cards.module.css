@@ -1,0 +1,32 @@
+.card {
+  position: relative;
+  background-color: var(--mantine-color-body);
+  width: 100%;        /* <-- fluid */
+  max-width: 420px;   /* optional cap */
+}
+
+.rating {
+  position: absolute;
+  top: var(--mantine-spacing-xs);
+  right: 12px;
+  pointer-events: none;
+}
+
+.title {
+  display: block;
+  font-family: Outfit, var(--mantine-font-family);
+  margin-top: var(--mantine-spacing-md);
+  margin-bottom: 5px;
+}
+
+/* Your original had invalid nesting. Use :hover */
+.action {
+  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-5));
+}
+.action:hover {
+  background-color: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6));
+}
+
+.footer {
+  margin-top: var(--mantine-spacing-md);
+}
