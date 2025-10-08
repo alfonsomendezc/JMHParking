@@ -1,8 +1,17 @@
+/* cards.module.css */
 .card {
   position: relative;
   background-color: var(--mantine-color-body);
-  width: 100%;        /* <-- fluid */
-  max-width: 420px;   /* optional cap */
+  width: 100%;
+  max-width: none;            /* <-- remove the cap for mobile */
+  height: 100%;
+}
+
+/* If you still want a cap for the desktop grid, re-apply it ≥ md (≈ 62rem) */
+@media (min-width: 62rem) {
+  .card {
+    max-width: 420px;         /* optional */
+  }
 }
 
 .rating {
@@ -19,7 +28,6 @@
   margin-bottom: 5px;
 }
 
-/* Your original had invalid nesting. Use :hover */
 .action {
   background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-5));
 }
