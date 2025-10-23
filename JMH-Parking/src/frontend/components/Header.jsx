@@ -9,8 +9,9 @@ import {
   useMantineColorScheme,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import classes from '../styles/header.module.css';
-import MPALogo from '../../images/MPAlogo.png';
+import classes from '/workspaces/JMHParking/JMH-Parking/src/styles/header.module.css';
+import MPALogo from '../images/MPAlogo.png';
+
 
 const NAV_ITEMS = [
   { key: 'apply', label: 'Apply', href: '/apply' },

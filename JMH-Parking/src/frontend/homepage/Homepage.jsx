@@ -1,14 +1,15 @@
-import { Header } from "./components/Header";
+import { Header } from "../components/Header";
 import { Hero } from "./components/Hero";
 import { GarageCards } from "./components/GarageCards";
 import { BackgroundImage, Overlay, Container, Title, Image, Text } from "@mantine/core";
-import classes from "./styles/homepage.module.css";
+import classes from "../homepage/styles/homepage.module.css";
 import CampusMap from "../images/CampusMap.jpg";
+
 
 export default function Homepage() {
     return (
         <>
-            <Header />
+            
             <Hero />
 
             <BackgroundImage
