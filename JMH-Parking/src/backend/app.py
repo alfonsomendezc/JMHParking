@@ -13,7 +13,14 @@ app = Flask(__name__)
 
 # CORS: allow your Vite preview URL in Gitpod (set via .gitpod.yml)
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
-CORS(app, resources={r"/*": {"origins": [FRONTEND_ORIGIN]}})
+
+CORS(
+    app,
+    resources={r"/*": {"origins": [FRONTEND_ORIGIN]}},
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+    expose_headers=["Content-Type"],
+)
 
 # DB URL (fallback to the Gitpod default if not set)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
