@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    container_name: jmh_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jmhdb
+      POSTGRES_USER: jmhuser
+      POSTGRES_PASSWORD: jmhpw
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jmhuser -d jmhdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  pgdata:

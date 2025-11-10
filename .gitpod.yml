@@ -1,12 +1,7 @@
-# .gitpod.yml  — Vite (React) + Flask + Postgres
-# Drop this at your repo root and push. Then open:
-# https://gitpod.io/#<your-repo-url>
-
+# .gitpod.yml — Vite (React) + Flask + Postgres
 image:
-  # Good default with Docker, Node, Python preinstalled
   file: .gitpod.Dockerfile
 
-# Optional editor defaults (VS Code in the browser)
 vscode:
   extensions:
     - ms-python.python
@@ -15,66 +10,62 @@ vscode:
     - esbenp.prettier-vscode
     - dbaeumer.vscode-eslint
     - bradlc.vscode-tailwindcss
-    - prisma.prisma           # if you ever use it; safe to leave/remove
-    - humao.rest-client
+    - cweijan.vscode-postgresql-client2
 
 ports:
-  - port: 5173           # Vite
+  - port: 5173
     onOpen: open-preview
     visibility: public
-  - port: 5000           # Flask API
+  - port: 5000
     onOpen: ignore
     visibility: public
-  - port: 5432           # Postgres
+  - port: 5432
     onOpen: ignore
     visibility: private
 
 tasks:
-  # --- 1) Start Postgres (Docker) ------------------------------------------
   - name: Postgres
     init: |
       docker pull postgres:16
     command: |
-      # Run Postgres in the background and wait for it to be ready
       docker rm -f pg 2>/dev/null || true
-      docker run --name pg -e POSTGRES_USER=app -e POSTGRES_PASSWORD=app \
-        -e POSTGRES_DB=app -p 5432:5432 -d postgres:16
+      docker run --name pg \
+        -e POSTGRES_USER=app -e POSTGRES_PASSWORD=app -e POSTGRES_DB=app \
+        -p 5432:5432 -d postgres:16
       gp await-port 5432
-      echo "Postgres is up on localhost:5432 (db=app / user=app / pass=app)"
+      echo "Postgres up on localhost:5432 (db=app / user=app / pass=app)"
 
-  # --- 2) Backend: create venv, install deps, migrate, run Flask -----------
   - name: Backend (Flask)
     init: |
       python -m venv .venv
       source .venv/bin/activate
-      # Adjust path to your requirements file
+      # install deps (use your own requirements.txt if present)
       pip install --upgrade pip
-      pip install -r backend/requirements.txt
-      # Default local DATABASE_URL for workspace; override via Gitpod secrets if you want
+      pip install flask flask-sqlalchemy flask-migrate flask-cors python-dotenv psycopg[binary]
+      # envs for the backend
       export DATABASE_URL=${DATABASE_URL:-postgresql+psycopg://app:app@localhost:5432/app}
-      cd backend
-      # Apply migrations if present; ignore if none yet
+      export FLASK_APP=JMH-Parking/src/backend/app.py
+      # create migrations dir if not yet created; ignore errors otherwise
+      flask db init || true
       flask db upgrade || true
     command: |
       source .venv/bin/activate
-      export FLASK_ENV=development
+      export DATABASE_URL=${DATABASE_URL:-postgresql+psycopg://app:app@localhost:5432/app}
+      export FLASK_APP=JMH-Parking/src/backend/app.py
       export FLASK_RUN_HOST=0.0.0.0
       export FLASK_RUN_PORT=5000
-      export DATABASE_URL=${DATABASE_URL:-postgresql+psycopg://app:app@localhost:5432/app}
-      # If you use a factory, set FLASK_APP="app:create_app"; otherwise point to your entry
-      # export FLASK_APP="app:create_app"
+      # pass the frontend origin (actual Gitpod URL for 5173)
+      export FRONTEND_ORIGIN=$(gp url 5173)
+      echo "FRONTEND_ORIGIN=$FRONTEND_ORIGIN"
       flask run
 
-  # --- 3) Frontend: install deps, write API URL, run Vite ------------------
   - name: Frontend (Vite)
     init: |
-      cd frontend
-      # Try fast CI install, fall back to npm i
+      cd JMH-Parking/src/frontend
       (npm ci || npm install)
-      # Write the API base URL to a dev-only env file using the forwarded 5000 URL
       API_URL=$(gp url 5000)
       echo "VITE_API_BASE_URL=$API_URL" > .env.local
       echo "Set VITE_API_BASE_URL to $API_URL"
     command: |
-      cd frontend
+      cd JMH-Parking/src/frontend
       npm run dev -- --host --port 5173
