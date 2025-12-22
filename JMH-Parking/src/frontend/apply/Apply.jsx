@@ -15,7 +15,6 @@ import {
 } from "@mantine/core";
 import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
 
-// --- tiny API helper (JS) ---
 const API_BASE = import.meta.env.VITE_API_BASE;
 if (!API_BASE) {
   throw new Error("VITE_API_BASE is not set. Add it to your frontend .env");

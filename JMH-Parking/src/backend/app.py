@@ -5,24 +5,39 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from datetime import datetime
 import os
+import re
 
 load_dotenv()
-# source /workspaces/JMHParking/.venv/bin/activate
 
 app = Flask(__name__)
 
-# CORS: allow your Vite preview URL in Gitpod (set via .gitpod.yml)
-FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+# ------------------------------
+# CORS
+# ------------------------------
+FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "").strip()
+
+allowed_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    r"https://.*-5173\.app\.github\.dev",  # Codespaces frontend
+    r"https://5173-.*\.gitpod\.io",        # Gitpod frontend
+]
+
+# If you set FRONTEND_ORIGIN explicitly, include it too
+if FRONTEND_ORIGIN:
+    allowed_origins.insert(0, FRONTEND_ORIGIN)
 
 CORS(
     app,
-    resources={r"/*": {"origins": [FRONTEND_ORIGIN]}},
+    resources={r"/*": {"origins": allowed_origins}},
+    supports_credentials=True,
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
-    expose_headers=["Content-Type"],
 )
 
-# DB URL (fallback to the Gitpod default if not set)
+# ------------------------------
+# Database
+# ------------------------------
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
     "DATABASE_URL",
     "postgresql+psycopg://app:app@localhost:5432/app"
@@ -51,7 +66,7 @@ class Parker(db.Model):
             "id": self.id,
             "firstName": self.firstName,
             "lastName": self.lastName,
-            "created_at": self.created_at.isoformat() + "Z"  # ISO 8601 (UTC style)
+            "created_at": self.created_at.isoformat() + "Z"
         }
 
 # ------------------------------
@@ -66,7 +81,6 @@ def health():
 # ------------------------------
 @app.get("/parkers")
 def list_parkers():
-    """Simple GET: list all parkers"""
     parkers = Parker.query.order_by(Parker.id.asc()).all()
     return jsonify([p.to_dict() for p in parkers]), 200
 
@@ -120,26 +134,12 @@ def delete_parker(parker_id):
     db.session.commit()
     return jsonify({"deleted": parker_id}), 200
 
-# ------------------------------
-# Dev helper (seed one record)
-# ------------------------------
-@app.post("/dev/seed")
-def seed_dev():
-    """Dev-only: insert one sample Parker if none exists."""
-    exists = Parker.query.first()
-    if exists:
-        return jsonify({"message": "Already seeded", "sample": exists.to_dict()}), 200
-    p = Parker(firstName="Jane", lastName="Doe")
-    db.session.add(p)
-    db.session.commit()
-    return jsonify(p.to_dict()), 201
 
-# ------------------------------
-# Entrypoint
-# ------------------------------
 if __name__ == "__main__":
     from time import sleep
     sleep(1)
     with app.app_context():
         db.create_all()
-    app.run(host="0.0.0.0", port=int(os.getenv("FLASK_RUN_PORT", 5001)), debug=True)
+
+    port = int(os.getenv("FLASK_RUN_PORT", 5001))
+    app.run(host="0.0.0.0", port=port, debug=True)
