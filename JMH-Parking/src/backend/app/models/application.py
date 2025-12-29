@@ -1,5 +1,6 @@
 from ..extensions import db
 from .utils import utc_now, iso_utc
+""" TO BE IMPLEMENTED IN FUTURE VERSIONS
 
 class Application(db.Model):
     __tablename__ = "applications"
@@ -47,3 +48,4 @@ class Application(db.Model):
             "reviewed_at": iso_utc(self.reviewed_at),
             "reviewed_by_user_id": self.reviewed_by_user_id,
         }
+"""

@@ -1,6 +1,6 @@
 from ..extensions import db
 from .utils import utc_now, iso_utc
-
+""" TO BE IMPLEMENTED IN FUTURE VERSIONS
 class User(db.Model):
     __tablename__ = "users"
 
@@ -27,3 +27,4 @@ class User(db.Model):
             "active": self.active,
             "created_at": iso_utc(self.created_at),
         }
+"""

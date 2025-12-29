@@ -1,4 +1,5 @@
 from ..extensions import db
+""" TO BE IMPLEMENTED IN FUTURE VERSIONS
 
 class Garage(db.Model):
     __tablename__ = "garages"
@@ -17,3 +18,4 @@ class Garage(db.Model):
 
     def to_dict(self):
         return {"id": self.id, "name": self.name, "address": self.address, "capacity": self.capacity}
+"""

@@ -1,5 +1,6 @@
 from ..extensions import db
 from .utils import utc_now, iso_utc
+""" TO BE IMPLEMENTED IN FUTURE VERSIONS
 
 class StatusCheckToken(db.Model):
     __tablename__ = "status_check_tokens"
@@ -29,3 +30,4 @@ class StatusCheckToken(db.Model):
             "active": self.active,
             "used_at": iso_utc(self.used_at),
         }
+"""

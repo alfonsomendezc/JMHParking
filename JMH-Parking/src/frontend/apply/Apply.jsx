@@ -1,5 +1,6 @@
 import classes from "./styles/apply.module.css";
-
+import FullTimeApp from "./views/FullTimeApp";
+import IndividualAccountApp from "./views/IndividualAccountApp";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -7,20 +8,15 @@ import {
   Paper,
   Title,
   Stack,
-  TextInput,
-  Group,
-  Button,
-  Alert,
-  Text,
 } from "@mantine/core";
-import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
+import employmentCatalog from "./data/employmentCatalog";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 if (!API_BASE) {
   throw new Error("VITE_API_BASE is not set. Add it to your frontend .env");
 }
 
-
+{/* TO BE IMPLEMENTED IN FUTURE VERSIONS
 async function postParker(payload) {
   const res = await fetch(`${API_BASE}/parkers`, {
     method: "POST",
@@ -33,118 +29,16 @@ async function postParker(payload) {
   }
   return res.json();
 }
-
-// --- Reusable form for posting to /parkers ---
-function ParkerForm({ employmentType }) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName]   = useState("");
-  const [error, setError]         = useState(null);
-  const [success, setSuccess]     = useState(null);
-  const [loading, setLoading]     = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    const f = firstName.trim();
-    const l = lastName.trim();
-
-    if (!f || !l) {
-      setError("Please enter both first and last name.");
-      return;
-    }
-    if (f.length > 15 || l.length > 15) {
-      setError("Names must be 15 characters or fewer.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const created = await postParker({ firstName: f, lastName: l });
-      setSuccess(
-        `Saved ${created.firstName} ${created.lastName} (${employmentType}). Created at: ${new Date(
-          created.created_at
-        ).toLocaleString()}`
-      );
-      setFirstName("");
-      setLastName("");
-    } catch (err) {
-      setError(err?.message || "Failed to submit.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const pretty = employmentType
-    ? employmentType[0].toUpperCase() + employmentType.slice(1)
-    : "Application";
-
-  return (
-    <Paper p="md" withBorder>
-      <Title order={4} mb="sm">{pretty} Application</Title>
-
-      <form onSubmit={handleSubmit}>
-        <Stack gap="sm">
-          <Group grow>
-            <TextInput
-              label="First name"
-              placeholder="Jane"
-              value={firstName}
-              onChange={(e) => setFirstName(e.currentTarget.value)}
-              maxLength={15}
-              required
-            />
-            <TextInput
-              label="Last name"
-              placeholder="Doe"
-              value={lastName}
-              onChange={(e) => setLastName(e.currentTarget.value)}
-              maxLength={15}
-              required
-            />
-          </Group>
-
-          <Text c="dimmed" size="sm">
-            This demo posts only name fields to <code>/parkers</code>. We can
-            extend it later with all required application fields.
-          </Text>
-
-          {error && (
-            <Alert color="red" icon={<IconAlertCircle />} variant="light">
-              {error}
-            </Alert>
-          )}
-          {success && (
-            <Alert color="green" icon={<IconCheck />} variant="light">
-              {success}
-            </Alert>
-          )}
-
-          <Group justify="flex-end">
-            <Button type="submit" loading={loading}>
-              Submit
-            </Button>
-          </Group>
-        </Stack>
-      </form>
-    </Paper>
-  );
-}
-
-// Per-view components now just mount the form
-function FullTimeView()  { return <ParkerForm employmentType="full-time" />; }
-function PartTimeView()  { return <ParkerForm employmentType="part-time" />; }
-function StudentView()   { return <ParkerForm employmentType="student" />; }
-
-const VIEW_MAP = {
-  "full-time": FullTimeView,
-  "part-time": PartTimeView,
-  "student": StudentView,
+*/}
+// calls employmentCatalog to get the form component
+const FORM_KIND_TO_VIEW = {
+  payroll: FullTimeApp,
+  ia: IndividualAccountApp,
 };
 
 export default function Apply() {
   const [searchParams, setSearchParams] = useSearchParams();
+  // URL type param keeps track of selected employment type
   const [type, setType] = useState(searchParams.get("type") || "");
 
   // keep URL in sync when user changes selection
@@ -153,30 +47,50 @@ export default function Apply() {
     else setSearchParams({});
   }, [type, setSearchParams]);
 
-  const ViewComponent = useMemo(() => VIEW_MAP[type] || null, [type]);
+  // Turns catalog array into Object for easy lookup
+  const catalogByCode = useMemo(() => {
+    const map = {};
+    for (const item of employmentCatalog) map[item.code] = item;
+    return map;
+  }, []);
+
+  // Select the relevant catalog item based on Employment type selected
+  const selected = catalogByCode[type];
+  // Get the form kind from the selected catalog item
+  const formKind = selected?.formKind || "";
+
+  // Get the relevant view component based on form kind
+  const ViewComponent = useMemo(() => {
+    return formKind ? (FORM_KIND_TO_VIEW[formKind] || null) : null;
+  }, [formKind]);
+
+  // Select options for the Select component
+  const selectData = useMemo(() => {
+    return employmentCatalog.map((x) => ({ value: x.code, label: x.label }));
+  }, []);
+
 
   return (
     <Stack gap="md" p="md" className={classes.applyPage}>
       <Title order={2}>Choose employment type</Title>
       <Select
         placeholder="Select type"
-        data={[
-          { value: "full-time", label: "Full-time" },
-          { value: "part-time", label: "Part-time" },
-          { value: "student", label: "Student" },
-        ]}
+        // uses the catalog-driven options.
+        data={selectData}
+        //makes it a controlled component.
         value={type}
-        onChange={(v) => setType(v || "")}  // Mantine returns value or null
+        onChange={(v) => setType(v || "")}
         clearable
       />
 
+
       {!type && (
         <Paper p="md" withBorder>
-          Select an employment type to see the relevant application.
+          Select your employment type to see the relevant application.
         </Paper>
       )}
 
-      {ViewComponent && <ViewComponent />}
+      {ViewComponent && <ViewComponent employmentCode={type} />}
     </Stack>
   );
 }

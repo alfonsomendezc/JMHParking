@@ -3,7 +3,7 @@ from ..extensions import db
 from ..models.parker import Parker
 
 bp = Blueprint("parkers", __name__, url_prefix="/parkers")
-
+""" TO BE IMPLEMENTED IN FUTURE VERSIONS
 @bp.get("")
 def list_parkers():
     parkers = Parker.query.order_by(Parker.id.asc()).all()
@@ -60,3 +60,5 @@ def delete_parker(parker_id):
     db.session.delete(p)
     db.session.commit()
     return jsonify({"deleted": parker_id}), 200
+
+"""

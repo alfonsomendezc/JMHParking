@@ -23,7 +23,7 @@ allowed_origins = [
     r"https://5173-.*\.gitpod\.io",        # Gitpod frontend
 ]
 
-# If you set FRONTEND_ORIGIN explicitly, include it too
+# If FRONTEND_ORIGIN is set explicitly, include it too
 if FRONTEND_ORIGIN:
     allowed_origins.insert(0, FRONTEND_ORIGIN)
 
@@ -46,7 +46,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
+""" TO BE IMPLEMENTED IN FUTURE VERSIONS
 # ------------------------------
 # Models
 # ------------------------------
@@ -134,6 +134,7 @@ def delete_parker(parker_id):
     db.session.commit()
     return jsonify({"deleted": parker_id}), 200
 
+"""
 
 if __name__ == "__main__":
     from time import sleep

@@ -1,6 +1,6 @@
 from ..extensions import db
 from .utils import utc_now, iso_utc
-
+""" TO BE IMPLEMENTED IN FUTURE VERSIONS
 class Parker(db.Model):
     __tablename__ = "parkers"
 
@@ -79,3 +79,5 @@ class Parker(db.Model):
             "created_at": iso_utc(self.created_at),
             "updated_at": iso_utc(self.updated_at),
         }
+
+"""
