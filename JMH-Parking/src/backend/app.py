@@ -68,14 +68,15 @@ class Parker(db.Model):
             "lastName": self.lastName,
             "created_at": self.created_at.isoformat() + "Z"
         }
+"""
 
 # ------------------------------
 # Health
 # ------------------------------
 @app.get("/")
 def health():
-    return jsonify({"status": "ok"})
-
+    return jsonify(ok=True, status="ok"), 200
+"""
 # ------------------------------
 # Parker routes (CRUD)
 # ------------------------------

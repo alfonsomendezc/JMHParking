@@ -1,5 +1,6 @@
 import classes from "../styles/apply.module.css";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import SignatureCanvas from "react-signature-canvas";
 import { useForm } from "@mantine/form";
 import {
   Paper,
@@ -13,6 +14,8 @@ import {
   FileInput,
   List,
   Badge,
+  Checkbox,
+  Radio
 } from "@mantine/core";
 
 import {
@@ -56,6 +59,9 @@ export default function FullTimeApp({ employmentCode }) {
       facility: "",
       rate: "",
       nightProof: null,
+      signatureMode: "typed",   // "typed" | "drawn"
+      signatureName: "",        // used when typed
+      acknowledge: false,
     },
     validate: {
       firstName: (v) => (!v?.trim() ? "First name is required" : null),
@@ -65,14 +71,19 @@ export default function FullTimeApp({ employmentCode }) {
         !v?.trim()
           ? "Email is required"
           : /^\S+@\S+\.\S+$/.test(v)
-          ? null
-          : "Enter a valid email",
+            ? null
+            : "Enter a valid email",
 
       licensePlate: (v) => (!v?.trim() ? "License plate is required" : null),
       badgeNumber: (v) => (!v?.trim() ? "Badge # is required" : null),
       // Add picture to indicate exactly which number is being requested
       cardNumber: (v) => (!v?.trim() ? "Card # is required" : null),
-
+      acknowledge: (v) => (v ? null : "You must acknowledge before submitting."),
+      signatureMode: (v) => (v ? null : "Signature mode required"),
+      signatureName: (v, values) =>
+        values.signatureMode === "typed" && !v?.trim()
+          ? "Typed signature is required"
+          : null,
       shift: (v) => {
         if (isShiftlessEmployment(employmentCode)) return null;
         return v ? null : "Shift is required";
@@ -95,6 +106,10 @@ export default function FullTimeApp({ employmentCode }) {
   });
 
   const shiftless = isShiftlessEmployment(employmentCode);
+  
+  // Signature ref
+  const sigRef = useRef(null);
+
 
   const eligibleFacilities = useMemo(
     () => getEligibleFacilities(employmentCode, form.values.shift),
@@ -141,12 +156,79 @@ export default function FullTimeApp({ employmentCode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eligibleFacilities]);
 
-  const onSubmit = form.onSubmit((values) => {
-    // Placeholder: submission will come later (FormData when file uploads are real)
+  const onSubmit = form.onSubmit(async (values) => {
     console.log("Payroll application payload (preview):", {
       employmentCode,
       ...values,
     });
+
+    const formData = new FormData();
+    // Always include employmentCode
+    formData.append("employmentCode", employmentCode);
+
+    // Append all non-file fields
+    Object.entries(values).forEach(([key, value]) => {
+      if (key === "nightProof") return; // handle separately
+      if (value !== null && value !== undefined) {
+        formData.append(key, value);
+      }
+    });
+
+    // Append file if present
+    if (values.nightProof) {
+      formData.append("nightProof", values.nightProof);
+    }
+    if (!values.acknowledge) {
+      alert("Please acknowledge before submitting.");
+      return;
+    }
+
+    formData.append("signatureMode", values.signatureMode);
+
+    if (values.signatureMode === "typed") {
+      if (!values.signatureName?.trim()) {
+        alert("Please type your signature.");
+        return;
+      }
+      formData.append("signatureName", values.signatureName.trim());
+    } else {
+      if (!sigRef.current || sigRef.current.isEmpty()) {
+        alert("Please draw your signature.");
+        return;
+      }
+      const dataUrl = sigRef.current.toDataURL("image/png");
+      const sigBlob = await (await fetch(dataUrl)).blob();
+      formData.append("signatureImage", sigBlob, "signature.png");
+    }
+
+
+    try {
+      const res = await fetch("/api/forms/payroll/pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Failed to generate PDF (${res.status}): ${text}`);
+      }
+
+      // Receive PDF as blob
+      const blob = await res.blob();
+
+      // Trigger download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Payroll_Parking_Application.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("There was an error submitting the form.");
+    }
   });
 
   return (
@@ -303,29 +385,29 @@ export default function FullTimeApp({ employmentCode }) {
                 />
               </Group>
 
-                  {!shiftless && (
-                    <Group grow mt="sm">
-                      <Select
-                        label="Shift"
-                        placeholder="Select shift"
-                        data={[
-                          { value: SHIFTS.DAY, label: "Day" },
-                          { value: SHIFTS.NIGHT, label: "Night" },
-                        ]}
-                        clearable
-                        {...form.getInputProps("shift")}
-                      />
-    
-                      <Select
-                        label="Facility"
-                        placeholder="Select shift first"
-                        data={facilityData}
-                        disabled={!form.values.shift}
-                        clearable
-                        {...form.getInputProps("facility")}
-                      />
-                    </Group>
-                  )}
+              {!shiftless && (
+                <Group grow mt="sm">
+                  <Select
+                    label="Shift"
+                    placeholder="Select shift"
+                    data={[
+                      { value: SHIFTS.DAY, label: "Day" },
+                      { value: SHIFTS.NIGHT, label: "Night" },
+                    ]}
+                    clearable
+                    {...form.getInputProps("shift")}
+                  />
+
+                  <Select
+                    label="Facility"
+                    placeholder="Select shift first"
+                    data={facilityData}
+                    disabled={!form.values.shift}
+                    clearable
+                    {...form.getInputProps("facility")}
+                  />
+                </Group>
+              )}
               <Group grow mt="sm">
                 <TextInput
                   label="Lawson # (optional)"
@@ -440,7 +522,7 @@ export default function FullTimeApp({ employmentCode }) {
                 </List.Item>
                 <List.Item>
                   Should a parking cardholder fail to use their parking access card to gain entrance into the parking facility
-                  and does not come to the Parking Services Office for a validation during normal business hours, no refund 
+                  and does not come to the Parking Services Office for a validation during normal business hours, no refund
                   will be given for any parking fees paid.
                 </List.Item>
               </List>
@@ -454,6 +536,49 @@ export default function FullTimeApp({ employmentCode }) {
                 if you will be absent or need to stop deductions.
               </Text>
             </div>
+
+            <Checkbox
+              label="I acknowledge that the information provided is true and I authorize payroll deductions."
+              {...form.getInputProps("acknowledge", { type: "checkbox" })}
+            />
+
+            <Radio.Group
+              mt="sm"
+              label="Signature method"
+              {...form.getInputProps("signatureMode")}
+            >
+              <Group mt="xs">
+                <Radio value="typed" label="Typed" />
+                <Radio value="drawn" label="Drawn" />
+              </Group>
+            </Radio.Group>
+
+            {form.values.signatureMode === "typed" ? (
+              <TextInput
+                mt="sm"
+                label="Type your full name"
+                placeholder="Full legal name"
+                {...form.getInputProps("signatureName")}
+              />
+            ) : (
+              <div style={{ marginTop: 12 }}>
+                <Text size="sm" fw={500}>Draw your signature</Text>
+                <SignatureCanvas
+                  ref={sigRef}
+                  penColor="black"
+                  canvasProps={{
+                    width: 420,
+                    height: 120,
+                    style: { border: "1px solid #ccc", borderRadius: 8, background: "white" },
+                  }}
+                />
+                <button type="button" onClick={() => sigRef.current?.clear()}>
+                  Clear signature
+                </button>
+              </div>
+            )}
+
+
 
             {/* Submit placeholder */}
             <Group justify="flex-end">

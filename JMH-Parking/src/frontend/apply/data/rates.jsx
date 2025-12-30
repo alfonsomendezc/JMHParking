@@ -3,7 +3,7 @@ import { SHIFTS, isShiftlessEmployment } from "./policies";
 const RATE_TABLE = {
   A1: { [SHIFTS.DAY]: 22.15, [SHIFTS.NIGHT]: 11.07 },
   A2: { [SHIFTS.DAY]: 22.15, [SHIFTS.NIGHT]: 11.07 },
-  A3: { [SHIFTS.DAY]: 22.15, [SHIFTS.NIGHT]: 11.07 },
+  A3: { [SHIFTS.DAY]: 5.54, [SHIFTS.NIGHT]: 5.54 },
   A4: { [SHIFTS.DAY]: 22.15, [SHIFTS.NIGHT]: 11.07 },
   A5: { [SHIFTS.DAY]: 22.15, [SHIFTS.NIGHT]: 11.07 },
   B1: { [SHIFTS.DAY]: 22.15, [SHIFTS.NIGHT]: 11.07 },

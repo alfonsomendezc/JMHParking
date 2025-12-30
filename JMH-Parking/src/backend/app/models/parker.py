@@ -1,4 +1,4 @@
-from ..extensions import db
+#from ..extensions import db
 from .utils import utc_now, iso_utc
 """ TO BE IMPLEMENTED IN FUTURE VERSIONS
 class Parker(db.Model):
